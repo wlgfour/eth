@@ -1,4 +1,4 @@
-#include </home/gerecke/Desktop/cFiles/eth.f/ethlib.f/ethlib.h>
+#include </home/gerecke/GitProjects/eth.git/ethlib.h>
 
 //http://man7.org/linux/man-pages/man7/packet.7.html
 //http://man7.org/linux/man-pages/man7/netdevice.7.html
@@ -18,7 +18,7 @@
 int main(int argc, int* argv) {
 
 	int i = 0, j = 0, curprint = 0, cbx = 0, cby = 0, paccounter, psiz, x, y;
-	char c, refrsh;
+	char refrsh;
 	pthread_t readt;
 	pthread_mutex_t pacount, data;
 	pthread_mutex_init(&pacount, NULL);
@@ -49,7 +49,6 @@ int main(int argc, int* argv) {
 	WINDOW *winalpha = newwin(50, (int)(x/3)-2, 7, (int)((x/3)*2)+2);
 	pthread_create(&readt, NULL, &readpack, (void *)&args);
 	while(1) {
-		c = -1;
 		if(rdKey(fd, KEY_UP)) {//refresh pack
 			refrsh = 'u';
 		}else if(rdKey(fd, KEY_DOWN)) {//refresh pack

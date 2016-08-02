@@ -1,4 +1,4 @@
-#include </home/gerecke/Desktop/cFiles/eth.f/ethlib.f/ethlib.h>
+#include </home/gerecke/GitProjects/eth.git/ethlib.h>
 
 //http://man7.org/linux/man-pages/man7/packet.7.html
 //http://man7.org/linux/man-pages/man7/netdevice.7.html
@@ -9,7 +9,7 @@
 int main(int argc, int* argv) {
 
 	int mysoc = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));	
-	Packet packSnd;//declare packet
+	PacketEth packSnd;//declare packet
 
 	int i = 0;
 	unsigned char buf[PACLEN-ETH_HLEN];//data
@@ -27,7 +27,7 @@ int main(int argc, int* argv) {
 		memset(&buf, 0, sizeof(buf)); 
 		while(i++<sizeof(buf)) buf[i] = i % 20;
 
-		packDes(packSnd, TRANS, RECV, htons(PROTO), buf, PACLEN);	
+		packEthDes(packSnd, TRANS, RECV, htons(PROTO), buf, PACLEN);	
 
 		if( write(mysoc, packSnd.buf, PACLEN) ) {//send packet
 			printf("sent\n");

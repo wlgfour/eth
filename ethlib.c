@@ -1,4 +1,4 @@
-#include </home/gerecke/Desktop/cFiles/eth.f/ethlib.f/ethlib.h>
+#include </home/gerecke/GitProjects/eth.git/ethlib.h>
 
 //http://www.humbug.in/2014/find-network-interface-mac-address-programatically-linux/
 //ex: wlan0, MAC;
@@ -56,13 +56,13 @@ int socDes(struct sockaddr_ll sock, char *interface, int mysoc) {
 	return 0;
 }
 
-int packDes(Packet packSnd, char *trans, char *recv, unsigned short proto, unsigned char buf[PACLEN-ETH_HLEN], int size) {
+int packEthDes(PacketEth packSnd, char *trans, char *recv, unsigned short proto, unsigned char buf[ETH_FRAME_LEN-ETH_HLEN], int size) {
 	printf("pack size: %d\n\theader: %d\n\tbody: %d\n", size, ETH_HLEN, size-ETH_HLEN);
 	
-	memset(&packSnd, 0, size);//zero out union
+	memset(&packSnd, 0, ETH_FRAME_LEN);//zero out union
 
 	int i = ETH_HLEN;
-	while(i<size) {
+	while(i<size) {//fill out payload (buf)
 		packSnd.buf[i] = buf[i-ETH_HLEN];
 		i++;
 	}
@@ -308,6 +308,20 @@ int pPackW(WINDOW *win, int psiz, unsigned char *buf) {
 		i++;
 	}
 	wprintw(win, "\nproto: %04x", ntohs(hdr.h_proto));
+	if(ntohs(hdr.h_proto) == 0x0800) {
+		pIpv4W(win, psiz, buf+14);
+	}
+	wrefresh(win);
+}
+int pIpv4W(WINDOW *win, int psiz, unsigned char *buf) {
+	int lin = 0;
+	union {
+		struct iphdr ip;
+		unsigned char buf[ETH_FRAME_LEN];
+		} ip;
+	memcpy(&ip, buf, psiz);
+	mvwprintw(win, lin, 26, "ipv%d", (unsigned int)ip.ip.version); lin++;
+	mvwprintw(win, lin, 26, "%d", ip.ip.ihl); lin++;
 	wrefresh(win);
 }
 int rdKey(int fd, int key) {//faster not to open file every time
