@@ -11,6 +11,8 @@
 #include <sys/ioctl.h>
 #include <linux/input.h>
 #include <linux/if_packet.h>
+#include <linux/ip.h>
+#include <linux/udp.h>
 #include <net/ethernet.h>
 #include <net/if.h>
 
