@@ -23,11 +23,12 @@
 #define PROTO 0X0000
 #define MAXPACBUF 1000
 
-typedef union packet{
-	struct ethhdr macs;
-	unsigned char buf[PACLEN];
-} Packet;
 typedef struct ifreq iface;
+
+typedef union ether_packet{
+	struct ethhdr macs;
+	unsigned char buf[ETH_FRAME_LEN];
+} PacketEth;
 typedef struct pPackWt_s{
 	WINDOW *win;
 	int psiz;
@@ -53,8 +54,8 @@ int getMac(char *ifacef, unsigned char *mac);
 //gets mac addres in hex from file descriptor
 int socDes(struct sockaddr_ll pack, char *interface, int mysoc);
 //fill out sockaddr_ll socket descriptor
-int packDes(Packet packSnd, char *trans, char *recv, unsigned short proto, unsigned char buf[PACLEN-ETH_HLEN], int size);
-//fill out Packet union (struct ethhdr & unsigned char buf[])
+int packEthDes(PacketEth packSnd, char *trans, char *recv, unsigned short proto, unsigned char buf[ETH_FRAME_LEN-ETH_HLEN], int size);
+//fill out PacketEth union (struct ethhdr & unsigned char buf[])
 int pPack(unsigned char *buf, int size);
 //prints contents of packet given char bufand sizeof(buf)
 int mod(int a, int b);
@@ -76,6 +77,8 @@ int pbuf0(WINDOW *win, char *txt, int s1, char mode, int cby);
 //draws txt on buffer with arrow key scrolling
 int pPackW(WINDOW *win, int psiz, unsigned char *buf);
 //parses ether header and prints to *WINDOW
+int pIpv4W(WINDOW *win, int psiz, unsigned char *buf);
+//prints parsed ip data to win. meant to be used in pPackW
 int rdKey(int fd, int key);
 //taked file descriptor and key code(number) returns 1 if pressed 0 else
 void *readpack(void *argp);
