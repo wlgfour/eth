@@ -292,7 +292,10 @@ int pPackW(WINDOW *win, int psiz, unsigned char *buf) {
 	werase(win);
 	struct ethhdr hdr;
 	memcpy(&hdr, buf, ETH_HLEN);
-	mvwprintw(win, 0, 0, "pack size: %d\n\theader: %d\n\tbody: %d\n", psiz, ETH_HLEN, psiz-ETH_HLEN);
+	wattron(win, A_REVERSE);
+	mvwprintw(win, 0, 0, "Ethernet:\n");
+	wattroff(win, A_REVERSE);
+	wprintw(win, "pack size:%d-->head:%d\n\t    -->body:%d\n", psiz, ETH_HLEN, psiz-ETH_HLEN);
 	wprintw(win, "trans: ");
 	int i = 0;
 	while(i<ETH_ALEN) {//print mac
@@ -318,10 +321,23 @@ int pIpv4W(WINDOW *win, int psiz, unsigned char *buf) {
 	union {
 		struct iphdr ip;
 		unsigned char buf[ETH_FRAME_LEN];
-		} ip;
+	} ip;
+	memset(&ip, 0, ETH_FRAME_LEN);
 	memcpy(&ip, buf, psiz);
+	wattron(win, A_REVERSE);
 	mvwprintw(win, lin, 26, "ipv%d", (unsigned int)ip.ip.version); lin++;
-	mvwprintw(win, lin, 26, "%d", ip.ip.ihl); lin++;
+	wattroff(win, A_REVERSE);
+	mvwprintw(win, lin, 26, "ihl:%d", (unsigned int)ip.ip.ihl); lin++;
+	mvwprintw(win, lin, 26, "tos:%d", (unsigned int)ip.ip.tos); lin++;
+	mvwprintw(win, lin, 26, "totLen:%X", (unsigned int)ip.ip.tot_len); lin++;//%x to conserve screen space
+	mvwprintw(win, lin, 26, "id:%X", (unsigned int)ip.ip.id); lin++;
+	mvwprintw(win, lin, 26, "fragOff:%d", (unsigned int)ip.ip.frag_off); lin++;
+	lin = 0;
+	mvwprintw(win, lin, 38, "ttl:%d", (unsigned int)ip.ip.ttl); lin++;
+	mvwprintw(win, lin, 38, "protocol:%d", (unsigned int)ip.ip.protocol); lin++;
+	mvwprintw(win, lin, 38, "check:%d", (unsigned int)ip.ip.check); lin++;
+	mvwprintw(win, lin, 38, "send:%d.%d.%d.%d", ip.ip.saddr & 0xFF, (ip.ip.saddr >> 8) & 0xFF, (ip.ip.saddr >> 16) & 0xFF, (ip.ip.saddr >> 24) & 0xFF); lin++;
+	mvwprintw(win, lin, 38, "recv:%d.%d.%d.%d", ip.ip.daddr & 0xFF, (ip.ip.daddr >> 8) & 0xFF, (ip.ip.daddr >> 16) & 0xFF, (ip.ip.daddr >> 24) & 0xFF); lin++;
 	wrefresh(win);
 }
 int rdKey(int fd, int key) {//faster not to open file every time

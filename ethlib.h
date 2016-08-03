@@ -21,7 +21,7 @@
 #define PACLEN 65
 #define LINLEN 23
 #define PROTO 0X0000
-#define MAXPACBUF 1000
+#define MAXPACBUF 5000
 
 typedef struct ifreq iface;
 
