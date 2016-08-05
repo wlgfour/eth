@@ -313,6 +313,8 @@ int pPackW(WINDOW *win, int psiz, unsigned char *buf) {
 	wprintw(win, "\nproto: %04x", ntohs(hdr.h_proto));
 	if(ntohs(hdr.h_proto) == 0x0800) {
 		pIpv4W(win, psiz-sizeof(struct ethhdr), buf+sizeof(struct ethhdr));
+	}else if(ntohs(hdr.h_proto) == 0x86DD) {
+		pIpv6W(win, psiz-sizeof(struct ethhdr), buf+sizeof(struct ethhdr));
 	}
 	wrefresh(win);
 }
@@ -325,25 +327,60 @@ int pIpv4W(WINDOW *win, int psiz, unsigned char *buf) {
 	memset(&ip, 0, psiz);
 	memcpy(&ip, buf, psiz);
 	wattron(win, A_REVERSE);
-	mvwprintw(win, lin, 26, "ipv%d", (unsigned int)ip.ip.version); lin++;
+	mvwprintw(win, lin, 28, "ipv%d", ip.ip.version); lin++;
 	wattroff(win, A_REVERSE);
-	mvwprintw(win, lin, 26, "ihl:%d", (unsigned int)ip.ip.ihl); lin++;
-	mvwprintw(win, lin, 26, "tos:%d", (unsigned int)ip.ip.tos); lin++;
-	mvwprintw(win, lin, 26, "totLen:%d", ntohs((unsigned int)ip.ip.tot_len)); lin++;
-	mvwprintw(win, lin, 26, "id:%d", ntohs((unsigned int)ip.ip.id)); lin++;
-	mvwprintw(win, lin, 26, "fragOff:%d", ntohs((unsigned int)ip.ip.frag_off)); lin++;
+	mvwprintw(win, lin, 28, "ihl:%u", ip.ip.ihl); lin++;
+	mvwprintw(win, lin, 28, "tos:%u", ip.ip.tos); lin++;
+	mvwprintw(win, lin, 28, "totLen:%u", ntohs(ip.ip.tot_len)); lin++;
+	mvwprintw(win, lin, 28, "id:%u", ntohs(ip.ip.id)); lin++;
+	mvwprintw(win, lin, 28, "fragOff:%x", ntohs(ip.ip.frag_off)); lin++;
 	lin = 1;
-	mvwprintw(win, lin, 38, "ttl:%d", (unsigned int)ip.ip.ttl); lin++;
-	mvwprintw(win, lin, 38, "protocol:%d", (unsigned int)ip.ip.protocol); lin++;
-	mvwprintw(win, lin, 38, "check:%x", ntohs((unsigned int)ip.ip.check)); lin++;
-	mvwprintw(win, lin, 38, "send:%d.%d.%d.%d", ip.ip.saddr & 0xFF, (ip.ip.saddr >> 8) & 0xFF, (ip.ip.saddr >> 16) & 0xFF, (ip.ip.saddr >> 24) & 0xFF); lin++;
-	mvwprintw(win, lin, 38, "recv:%d.%d.%d.%d", ip.ip.daddr & 0xFF, (ip.ip.daddr >> 8) & 0xFF, (ip.ip.daddr >> 16) & 0xFF, (ip.ip.daddr >> 24) & 0xFF); lin++;
+	mvwprintw(win, lin, 42, "ttl:%u", ip.ip.ttl); lin++;
+	mvwprintw(win, lin, 42, "protocol:%u", ip.ip.protocol); lin++;
+	mvwprintw(win, lin, 42, "check:%x", ntohs(ip.ip.check)); lin++;
+	mvwprintw(win, lin, 42, "send:%d.%d.%d.%d", ip.ip.saddr & 0xFF, (ip.ip.saddr >> 8) & 0xFF, (ip.ip.saddr >> 16) & 0xFF, (ip.ip.saddr >> 24) & 0xFF); lin++;
+	mvwprintw(win, lin, 42, "recv:%d.%d.%d.%d", ip.ip.daddr & 0xFF, (ip.ip.daddr >> 8) & 0xFF, (ip.ip.daddr >> 16) & 0xFF, (ip.ip.daddr >> 24) & 0xFF); lin++;
 	wrefresh(win);
 	if(ip.ip.protocol == 17) {
-		pUdpW(win, psiz-(ip.ip.ihl*4), buf+(ip.ip.ihl*4));
+		pUdpW(win, psiz-(ip.ip.ihl*4), buf+(ip.ip.ihl*4), 64);
+	}else if(ip.ip.protocol == 6) {
+		pTcpW(win, psiz-(ip.ip.ihl*4), buf+(ip.ip.ihl*4), 64);
 	}
 }
-int pUdpW(WINDOW *win, int psiz, unsigned char *buf) {
+int pIpv6W(WINDOW *win, int psiz, unsigned char *buf) {
+	int lin = 0;
+	int i = 0;
+	union {
+		struct ipv6hdr ip;
+		unsigned char buf[psiz];
+	} ip;
+	memset(&ip, 0, psiz);
+	memcpy(&ip, buf, psiz);
+	wattron(win, A_REVERSE);
+	mvwprintw(win, lin, 28, "ipv%d", ip.ip.version); lin++;
+	wattroff(win, A_REVERSE);
+	mvwprintw(win, lin, 28, "ihl:%u", ip.ip.priority); lin++;
+	mvwprintw(win, lin, 28, "flow_lbl:%u-%u-%u", ip.ip.flow_lbl[0], ip.ip.flow_lbl[1], ip.ip.flow_lbl[2]); lin++;
+	mvwprintw(win, lin, 28, "payldLen:%u", ntohs(ip.ip.payload_len)); lin++;
+	mvwprintw(win, lin, 28, "nextHdr:%u", ip.ip.nexthdr); lin++;
+	mvwprintw(win, lin, 28, "fragOff:%u", ntohs(ip.ip.hop_limit)); lin++;
+	lin = 1;
+	mvwprintw(win, lin, 46, "source--"); 
+	while(i++ <4)
+		wprintw(win, "%x%c", ip.ip.saddr.in6_u.u6_addr32[i-1], i==4?' ':':');
+	i = 0;
+	lin++;
+	mvwprintw(win, lin, 46, "dest----");
+	while(i++ <4)
+		wprintw(win, "%x%c", ip.ip.daddr.in6_u.u6_addr32[i-1], i==4?' ':':');
+	wrefresh(win);
+	if(ip.ip.nexthdr == 17) {
+		pUdpW(win, psiz-sizeof(struct ipv6hdr), buf+sizeof(struct ipv6hdr), 96);
+	}else if(ip.ip.nexthdr == 6) {
+		pTcpW(win, psiz-sizeof(struct ipv6hdr), buf+sizeof(struct ipv6hdr), 96);
+	}
+}
+int pUdpW(WINDOW *win, int psiz, unsigned char *buf, int x) {
 	int lin = 0;
 	union {
 		struct udphdr udp;
@@ -352,12 +389,32 @@ int pUdpW(WINDOW *win, int psiz, unsigned char *buf) {
 	memset(&udp, 0, psiz);
 	memcpy(&udp, buf, psiz);
 	wattron(win, A_REVERSE);
-	mvwprintw(win, lin, 60, "UDP"); lin++;
+	mvwprintw(win, lin, x, "UDP"); lin++;
 	wattroff(win, A_REVERSE);
-	mvwprintw(win, lin, 60, "source:%d", ntohs((unsigned int)udp.udp.source)); lin++;
-	mvwprintw(win, lin, 60, "dest:%d", ntohs((unsigned int)udp.udp.dest)); lin++;
-	mvwprintw(win, lin, 60, "len:%d", ntohs((unsigned int)udp.udp.len)); lin++;
-	mvwprintw(win, lin, 60, "check:%x", ntohs((unsigned int)udp.udp.check)); lin++;
+	mvwprintw(win, lin, x, "source:%u", ntohs(udp.udp.source)); lin++;
+	mvwprintw(win, lin, x, "dest:%u", ntohs(udp.udp.dest)); lin++;
+	mvwprintw(win, lin, x, "len:%u", ntohs(udp.udp.len)); lin++;
+	mvwprintw(win, lin, x, "check:%x", ntohs(udp.udp.check)); lin++;
+}
+int pTcpW(WINDOW *win, int psiz, unsigned char *buf, int x) {
+	int lin = 0;
+	union {
+		struct tcphdr tcp;
+		unsigned char buf[psiz];
+	} tcp;
+	memset(&tcp, 0, psiz);
+	memcpy(&tcp, buf, psiz);
+	wattron(win, A_REVERSE);
+	mvwprintw(win, lin, x, "TCP"); lin++;
+	wattroff(win, A_REVERSE);
+	mvwprintw(win, lin, x, "source:%u", ntohs(tcp.tcp.source)); lin++;
+	mvwprintw(win, lin, x, "dest:%u", ntohs(tcp.tcp.dest)); lin++;
+	mvwprintw(win, lin, x, "seq:%x", ntohl(tcp.tcp.seq)); lin++;
+	mvwprintw(win, lin, x, "ackSeq:%x", ntohl(tcp.tcp.ack_seq)); lin++;
+	lin = 1;	
+	mvwprintw(win, lin, x+14, "window:%u", ntohs(tcp.tcp.window)); lin++;
+	mvwprintw(win, lin, x+14, "check:%x", ntohs(tcp.tcp.check)); lin++;
+	mvwprintw(win, lin, x+14, "urg_ptr:%u", ntohs(tcp.tcp.urg_ptr)); lin++;
 }
 int rdKey(int fd, int key) {//faster not to open file every time
 //	const char *dev = "/dev/input/by-path/platform-i8042-serio-0-event-kbd";

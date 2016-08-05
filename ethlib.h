@@ -12,6 +12,7 @@
 #include <linux/input.h>
 #include <linux/if_packet.h>
 #include <linux/ip.h>
+#include <linux/ipv6.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
 #include <net/ethernet.h>
@@ -80,8 +81,12 @@ int pPackW(WINDOW *win, int psiz, unsigned char *buf);
 //parses ether header and prints to *WINDOW
 int pIpv4W(WINDOW *win, int psiz, unsigned char *buf);
 //prints parsed ip data to win. meant to be used in pPackW
-int pUdpW(WINDOW *win, int psiz, unsigned char *buf);
+int pIpv6W(WINDOW *win, int psiz, unsigned char *buf);
+//prints parsed ipv6 data to win. meant to be used in pPackW
+int pUdpW(WINDOW *win, int psiz, unsigned char *buf, int x);
 //print udp header info
+int pTcpW(WINDOW *win, int psiz, unsigned char *buf, int x);
+//prints tcp packet to the window
 int rdKey(int fd, int key);
 //taked file descriptor and key code(number) returns 1 if pressed 0 else
 void *readpack(void *argp);
